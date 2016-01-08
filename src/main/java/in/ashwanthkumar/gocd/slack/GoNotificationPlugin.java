@@ -6,12 +6,17 @@ import com.thoughtworks.go.plugin.api.GoPlugin;
 import com.thoughtworks.go.plugin.api.GoPluginIdentifier;
 import com.thoughtworks.go.plugin.api.annotation.Extension;
 import com.thoughtworks.go.plugin.api.logging.Logger;
+import com.thoughtworks.go.plugin.api.request.GoApiRequest;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
+import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import in.ashwanthkumar.gocd.slack.ruleset.Rules;
 import in.ashwanthkumar.gocd.slack.ruleset.RulesReader;
+import in.ashwanthkumar.gocd.slack.util.JSONUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static java.util.Arrays.asList;
@@ -23,6 +28,9 @@ public class GoNotificationPlugin implements GoPlugin {
     public static final String EXTENSION_TYPE = "notification";
     private static final List<String> goSupportedVersions = asList("1.0");
 
+    public static final String REQUEST_NOTIFICATION_VALIDATE_CONFIGURATION = "go.plugin-settings.validate-configuration";
+    public static final String REQUEST_NOTIFICATION_CONFIGURATION = "go.plugin-settings.get-configuration";
+    public static final String REQUEST_NOTIFICATION_CONFIGURATION_VIEW = "go.plugin-settings.get-view";
     public static final String REQUEST_NOTIFICATIONS_INTERESTED_IN = "notifications-interested-in";
     public static final String REQUEST_STAGE_STATUS = "stage-status";
 
@@ -31,19 +39,24 @@ public class GoNotificationPlugin implements GoPlugin {
 
     public static final String GO_NOTIFY_CONFIGURATION = "go_notify.conf";
 
+    public static final String GET_PLUGIN_SETTINGS = "go.processor.plugin-settings.get";
+
+
     private Rules rules;
+    private GoApplicationAccessor goApplicationAccessor;
 
     public GoNotificationPlugin() {
         String userHome = System.getProperty("user.home");
         File pluginConfig = new File(userHome + File.separator + GO_NOTIFY_CONFIGURATION);
         if (!pluginConfig.exists()) {
             throw new RuntimeException(String.format("%s file is not found in %s", GO_NOTIFY_CONFIGURATION, userHome));
+        } else {
+            rules = RulesReader.read(pluginConfig);
         }
-        rules = RulesReader.read(pluginConfig);
     }
 
     public void initializeGoApplicationAccessor(GoApplicationAccessor goApplicationAccessor) {
-        // ignore
+        this.goApplicationAccessor = goApplicationAccessor;
     }
 
     public GoPluginApiResponse handle(GoPluginApiRequest goPluginApiRequest) {
@@ -51,8 +64,114 @@ public class GoNotificationPlugin implements GoPlugin {
             return handleNotificationsInterestedIn();
         } else if (goPluginApiRequest.requestName().equals(REQUEST_STAGE_STATUS)) {
             return handleStageNotification(goPluginApiRequest);
+        } else if (goPluginApiRequest.requestName().equals(REQUEST_NOTIFICATION_CONFIGURATION)) {
+            return handleNotificationConfig();
+        } else if (goPluginApiRequest.requestName().equals(REQUEST_NOTIFICATION_CONFIGURATION_VIEW)) {
+            try {
+                return handleSCMView();
+            } catch (IOException e) {
+                String message = "Failed to find template: " + e.getMessage();
+                return renderJSON(INTERNAL_ERROR_RESPONSE_CODE, message);
+            }
+        } else if (goPluginApiRequest.requestName().equals(REQUEST_NOTIFICATION_VALIDATE_CONFIGURATION)) {
+            return handleValidatePluginSettingsConfiguration(goPluginApiRequest);
         }
-        return null;
+        return renderJSON(404, null);
+    }
+
+    private GoPluginApiResponse handleNotificationConfig() {
+        Map<String, Object> response = new HashMap<String, Object>();
+        response.put("serverhost", createField("Server Host", null, false, true, false, "0"));
+        response.put("webhookurl", createField("Webhook URL", null, true, false, false, "1"));
+        response.put("defaultchannel", createField("Default Channel", null, false, false, false, "2"));
+        response.put("adminusername", createField("Admin Username", null, false, false, false, "3"));
+        response.put("adminpassword", createField("Admin Password", null, false, false, true, "4"));
+        return renderJSON(SUCCESS_RESPONSE_CODE, response);
+    }
+
+    private GoPluginApiResponse handleSCMView() throws IOException {
+        Map<String, Object> response = new HashMap<String, Object>();
+        response.put("displayValue", "Slack");
+        response.put("template", getFileContents("/notification.template.html"));
+        return renderJSON(SUCCESS_RESPONSE_CODE, response);
+    }
+
+    private GoPluginApiResponse handleValidatePluginSettingsConfiguration(GoPluginApiRequest goPluginApiRequest) {
+        List<Map<String, Object>> response = new ArrayList<Map<String, Object>>();
+        return renderJSON(SUCCESS_RESPONSE_CODE, response);
+    }
+
+    public Rules getRules() {
+        Map<String, Object> responseBodyMap = getRulesFromGo();
+
+        Rules rules = new Rules();
+        rules
+                .setEnabled(true)
+                .setGoLogin((String)responseBodyMap.get("adminusername"))
+                .setGoPassword((String)responseBodyMap.get("adminpassword"))
+                .setWebHookUrl((String)responseBodyMap.get("webhookurl"))
+                .setGoServerHost((String)responseBodyMap.get("serverhost"));
+
+        return rules;
+    }
+
+    private Map<String, Object> getRulesFromGo() {
+        Map<String, Object> requestMap = new HashMap<String, Object>();
+        requestMap.put("plugin-id", "slack.notifier");
+        GoApiResponse response = goApplicationAccessor.submit(createGoApiRequest(GET_PLUGIN_SETTINGS, JSONUtils.toJSON(requestMap)));
+
+        return response.responseBody() == null ?
+                new HashMap<String, Object>() :
+                (Map<String, Object>) JSONUtils.fromJSON(response.responseBody());
+    }
+
+    private GoApiRequest createGoApiRequest(final String api, final String responseBody) {
+        return new GoApiRequest() {
+            @Override
+            public String api() {
+                return api;
+            }
+
+            @Override
+            public String apiVersion() {
+                return "1.0";
+            }
+
+            @Override
+            public GoPluginIdentifier pluginIdentifier() {
+                return pluginIdentifier();
+            }
+
+            @Override
+            public Map<String, String> requestParameters() {
+                return null;
+            }
+
+            @Override
+            public Map<String, String> requestHeaders() {
+                return null;
+            }
+
+            @Override
+            public String requestBody() {
+                return responseBody;
+            }
+        };
+    }
+
+    private String getFileContents(String filePath) throws IOException {
+        return IOUtils.toString(getClass().getResourceAsStream(filePath), "UTF-8");
+    }
+
+    private Map<String, Object> createField(String displayName, String defaultValue, boolean isPartOfIdentity, boolean isRequired, boolean isSecure, String displayOrder) {
+        Map<String, Object> fieldProperties = new HashMap<String, Object>();
+        fieldProperties.put("display-name", displayName);
+        fieldProperties.put("default-value", defaultValue);
+        fieldProperties.put("part-of-identity", isPartOfIdentity);
+        fieldProperties.put("required", isRequired);
+        fieldProperties.put("secure", isSecure);
+        fieldProperties.put("display-order", displayOrder);
+        return fieldProperties;
     }
 
     public GoPluginIdentifier pluginIdentifier() {
