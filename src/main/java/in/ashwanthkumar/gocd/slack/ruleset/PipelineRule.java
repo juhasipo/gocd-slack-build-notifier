@@ -3,7 +3,6 @@ package in.ashwanthkumar.gocd.slack.ruleset;
 import com.typesafe.config.Config;
 import in.ashwanthkumar.utils.collections.Iterables;
 import in.ashwanthkumar.utils.func.Predicate;
-import in.ashwanthkumar.utils.lang.StringUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -133,14 +132,6 @@ public class PipelineRule {
             pipelineRule.setChannel(config.getString("channel"));
         }
 
-        return pipelineRule;
-    }
-
-    public static PipelineRule fromConfig(Config config, String channel) {
-        PipelineRule pipelineRule = fromConfig(config);
-        if (StringUtils.isEmpty(pipelineRule.getChannel())) {
-            pipelineRule.setChannel(channel);
-        }
         return pipelineRule;
     }
 
