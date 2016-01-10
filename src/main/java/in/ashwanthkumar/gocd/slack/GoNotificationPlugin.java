@@ -10,12 +10,12 @@ import com.thoughtworks.go.plugin.api.request.GoApiRequest;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
+import in.ashwanthkumar.gocd.slack.ruleset.RuleResolver;
 import in.ashwanthkumar.gocd.slack.ruleset.Rules;
-import in.ashwanthkumar.gocd.slack.ruleset.RulesReader;
+import in.ashwanthkumar.gocd.slack.util.DefaultHttpRequestUtil;
 import in.ashwanthkumar.gocd.slack.util.JSONUtils;
 import org.apache.commons.io.IOUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -37,22 +37,18 @@ public class GoNotificationPlugin implements GoPlugin {
     public static final int SUCCESS_RESPONSE_CODE = 200;
     public static final int INTERNAL_ERROR_RESPONSE_CODE = 500;
 
-    public static final String GO_NOTIFY_CONFIGURATION = "go_notify.conf";
-
     public static final String GET_PLUGIN_SETTINGS = "go.processor.plugin-settings.get";
 
-
-    private Rules rules;
     private GoApplicationAccessor goApplicationAccessor;
+    private RuleResolver ruleResolver;
 
     public GoNotificationPlugin() {
-        String userHome = System.getProperty("user.home");
-        File pluginConfig = new File(userHome + File.separator + GO_NOTIFY_CONFIGURATION);
-        if (!pluginConfig.exists()) {
-            throw new RuntimeException(String.format("%s file is not found in %s", GO_NOTIFY_CONFIGURATION, userHome));
-        } else {
-            rules = RulesReader.read(pluginConfig);
-        }
+        ruleResolver = new RuleResolver(new DefaultHttpRequestUtil());
+    }
+
+    public GoNotificationPlugin(GoApplicationAccessor goApplicationAccessor, RuleResolver ruleResolver) {
+        this.goApplicationAccessor = goApplicationAccessor;
+        this.ruleResolver = ruleResolver;
     }
 
     public void initializeGoApplicationAccessor(GoApplicationAccessor goApplicationAccessor) {
@@ -60,6 +56,7 @@ public class GoNotificationPlugin implements GoPlugin {
     }
 
     public GoPluginApiResponse handle(GoPluginApiRequest goPluginApiRequest) {
+        //printMessageDebugInfo(goPluginApiRequest);
         if (goPluginApiRequest.requestName().equals(REQUEST_NOTIFICATIONS_INTERESTED_IN)) {
             return handleNotificationsInterestedIn();
         } else if (goPluginApiRequest.requestName().equals(REQUEST_STAGE_STATUS)) {
@@ -77,6 +74,21 @@ public class GoNotificationPlugin implements GoPlugin {
             return handleValidatePluginSettingsConfiguration(goPluginApiRequest);
         }
         return renderJSON(404, null);
+    }
+
+    private void printMessageDebugInfo(GoPluginApiRequest goPluginApiRequest) {
+        LOGGER.info("Received message: " + goPluginApiRequest.requestName());
+        LOGGER.info("Received message body: " + goPluginApiRequest.requestBody());
+
+        LOGGER.info("Headers");
+        for (Map.Entry<String, String> e : goPluginApiRequest.requestHeaders().entrySet()) {
+            LOGGER.info("   Key: " + e.getKey() + ", Value: " + e.getValue());
+        }
+
+        LOGGER.info("Params");
+        for (Map.Entry<String, String> e : goPluginApiRequest.requestParameters().entrySet()) {
+            LOGGER.info("   Key: " + e.getKey() + ", Value: " + e.getValue());
+        }
     }
 
     private GoPluginApiResponse handleNotificationConfig() {
@@ -101,18 +113,14 @@ public class GoNotificationPlugin implements GoPlugin {
         return renderJSON(SUCCESS_RESPONSE_CODE, response);
     }
 
-    public Rules getRules() {
+    public Rules getDefaultRules() {
         Map<String, Object> responseBodyMap = getRulesFromGo();
-
-        Rules rules = new Rules();
-        rules
-                .setEnabled(true)
+        return new Rules()
+                .setEnabled(false)
                 .setGoLogin((String)responseBodyMap.get("adminusername"))
                 .setGoPassword((String)responseBodyMap.get("adminpassword"))
                 .setWebHookUrl((String)responseBodyMap.get("webhookurl"))
                 .setGoServerHost((String)responseBodyMap.get("serverhost"));
-
-        return rules;
     }
 
     private Map<String, Object> getRulesFromGo() {
@@ -191,9 +199,11 @@ public class GoNotificationPlugin implements GoPlugin {
         Map<String, Object> response = new HashMap<String, Object>();
         List<String> messages = new ArrayList<String>();
         try {
+            Rules rules = ruleResolver.resolvePipelineRule(getDefaultRules(), message.getPipelineName(), message.getStageName());
+
             response.put("status", "success");
             LOGGER.info(message.fullyQualifiedJobName() + " has " + message.getStageState() + "/" + message.getStageResult());
-            rules.getPipelineListener().notify(message);
+            rules.resolvePipelineListener().notify(message);
         } catch (Exception e) {
             LOGGER.error("Error handling status message", e);
             responseCode = INTERNAL_ERROR_RESPONSE_CODE;

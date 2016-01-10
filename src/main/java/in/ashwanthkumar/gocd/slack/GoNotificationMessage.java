@@ -1,27 +1,30 @@
 package in.ashwanthkumar.gocd.slack;
 
-import in.ashwanthkumar.gocd.slack.ruleset.Rules;
-
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
-
 import com.thoughtworks.go.plugin.api.logging.Logger;
+import in.ashwanthkumar.gocd.slack.ruleset.Rules;
+import in.ashwanthkumar.gocd.slack.util.DefaultHttpRequestUtil;
+import in.ashwanthkumar.gocd.slack.util.HttpRequestUtil;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import javax.xml.bind.DatatypeConverter;
 
 public class GoNotificationMessage {
     private Logger LOG = Logger.getLoggerFor(GoNotificationMessage.class);
+
+    private final HttpRequestUtil httpRequestUtil;
+
+    public GoNotificationMessage() {
+        httpRequestUtil = new DefaultHttpRequestUtil();
+    }
+
+    public GoNotificationMessage(HttpRequestUtil httpRequestUtil) {
+        this.httpRequestUtil = httpRequestUtil;
+    }
 
     /**
      * Raised when we can't find information about our build in the array
@@ -70,8 +73,6 @@ public class GoNotificationMessage {
     @SerializedName("pipeline")
     private Pipeline pipeline;
 
-    // Internal cache of pipeline history data from GoCD's JSON API.
-    private JsonArray mRecentPipelineHistory;
 
     public String goServerUrl(String host) throws URISyntaxException {
         return new URI(String.format("%s/go/pipelines/%s/%s/%s/%s", host, pipeline.name, pipeline.counter, pipeline.stage.name, pipeline.stage.counter)).normalize().toASCIIString();
@@ -117,45 +118,11 @@ public class GoNotificationMessage {
         return pipeline.stage.lastTransitionTime;
     }
 
-    /**
-     * Fetch the full history of this pipeline from the server.  We can't
-     * get specify a specific version, unfortunately.
-     */
-    public JsonArray fetchRecentPipelineHistory(Rules rules)
-        throws URISyntaxException, IOException
-    {
-        if (mRecentPipelineHistory == null) {
-            // Based on
-            // https://github.com/matt-richardson/gocd-websocket-notifier/blob/master/src/main/java/com/matt_richardson/gocd/websocket_notifier/PipelineDetailsPopulator.java
-            // http://stackoverflow.com/questions/496651/connecting-to-remote-url-which-requires-authentication-using-java
-
-            URL url = new URL(goHistoryUrl(rules.getGoServerHost()));
-            HttpURLConnection request = (HttpURLConnection) url.openConnection();
-
-            // Add in our HTTP authorization credentials if we have them.
-            String username = rules.getGoLogin();
-            String password = rules.getGoPassword();
-            if (username != null && password != null) {
-                String userpass = username + ":" + password;
-                String basicAuth = "Basic "
-                    + DatatypeConverter.printBase64Binary(userpass.getBytes());
-                request.setRequestProperty("Authorization", basicAuth);
-            }
-
-            request.connect();
-
-            JsonParser parser = new JsonParser();
-            JsonElement rootElement = parser.parse(new InputStreamReader((InputStream) request.getContent()));
-            JsonObject json = rootElement.getAsJsonObject();
-            mRecentPipelineHistory = json.get("pipelines").getAsJsonArray();
-        }
-        return mRecentPipelineHistory;
-    }
-
     public JsonObject fetchDetailsForBuild(Rules rules, int counter)
         throws URISyntaxException, IOException, BuildDetailsNotFoundException
     {
-        JsonArray history = fetchRecentPipelineHistory(rules);
+        URL url = new URL(goHistoryUrl(rules.getGoServerHost()));
+        JsonArray history = httpRequestUtil.fetchRecentPipelineHistory(rules, url);
         // Search through the builds in our recent history, and hope that
         // we can find the build we want.
         for (int i = 0, size = history.size(); i < size; i++) {

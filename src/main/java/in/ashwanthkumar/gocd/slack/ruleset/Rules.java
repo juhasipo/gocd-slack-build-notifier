@@ -2,6 +2,7 @@ package in.ashwanthkumar.gocd.slack.ruleset;
 
 import com.typesafe.config.Config;
 import in.ashwanthkumar.gocd.slack.PipelineListener;
+import in.ashwanthkumar.gocd.slack.SlackPipelineListener;
 import in.ashwanthkumar.utils.collections.Lists;
 import in.ashwanthkumar.utils.func.Function;
 import in.ashwanthkumar.utils.func.Predicate;
@@ -106,6 +107,7 @@ public class Rules {
         return this;
     }
 
+    @Deprecated
     public PipelineListener getPipelineListener() {
         return pipelineListener;
     }
@@ -118,6 +120,7 @@ public class Rules {
         });
     }
 
+    @Deprecated
     public static Rules fromConfig(Config config) {
         boolean isEnabled = config.getBoolean("enabled");
 
@@ -171,5 +174,9 @@ public class Rules {
         }
 
         return rules;
+    }
+
+    public PipelineListener resolvePipelineListener() {
+        return new SlackPipelineListener(this);
     }
 }

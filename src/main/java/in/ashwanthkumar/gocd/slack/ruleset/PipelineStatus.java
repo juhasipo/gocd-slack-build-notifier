@@ -4,6 +4,7 @@ import in.ashwanthkumar.gocd.slack.GoNotificationMessage;
 import in.ashwanthkumar.gocd.slack.PipelineListener;
 
 public enum PipelineStatus {
+
     /**
      * Status of the pipeline while being built.
      */

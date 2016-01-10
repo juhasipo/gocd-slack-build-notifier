@@ -1,5 +1,7 @@
 package in.ashwanthkumar.gocd.slack;
 
+import com.google.gson.JsonObject;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import in.ashwanthkumar.gocd.slack.ruleset.PipelineRule;
 import in.ashwanthkumar.gocd.slack.ruleset.PipelineStatus;
 import in.ashwanthkumar.gocd.slack.ruleset.Rules;
@@ -7,10 +9,6 @@ import in.ashwanthkumar.slack.webhook.Slack;
 import in.ashwanthkumar.slack.webhook.SlackAttachment;
 
 import java.net.URISyntaxException;
-
-import com.google.gson.JsonObject;
-import com.thoughtworks.go.plugin.api.logging.Logger;
-import com.typesafe.config.Config;
 
 import static in.ashwanthkumar.slack.webhook.util.StringUtils.startsWith;
 
