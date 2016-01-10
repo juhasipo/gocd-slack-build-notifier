@@ -95,9 +95,10 @@ public class GoNotificationPlugin implements GoPlugin {
         Map<String, Object> response = new HashMap<String, Object>();
         response.put("serverhost", createField("Server Host", null, false, true, false, "0"));
         response.put("webhookurl", createField("Webhook URL", null, true, false, false, "1"));
-        response.put("defaultchannel", createField("Default Channel", null, false, false, false, "2"));
-        response.put("adminusername", createField("Admin Username", null, false, false, false, "3"));
-        response.put("adminpassword", createField("Admin Password", null, false, false, true, "4"));
+        response.put("iconurl", createField("Icon URL", null, false, false, false, "2"));
+        response.put("defaultchannel", createField("Default Channel", null, false, false, false, "3"));
+        response.put("adminusername", createField("Admin Username", null, false, false, false, "4"));
+        response.put("adminpassword", createField("Admin Password", null, false, false, true, "5"));
         return renderJSON(SUCCESS_RESPONSE_CODE, response);
     }
 
@@ -120,6 +121,7 @@ public class GoNotificationPlugin implements GoPlugin {
                 .setGoLogin((String)responseBodyMap.get("adminusername"))
                 .setGoPassword((String)responseBodyMap.get("adminpassword"))
                 .setWebHookUrl((String)responseBodyMap.get("webhookurl"))
+                .setSlackUserIcon((String)responseBodyMap.get("iconurl"))
                 .setGoServerHost((String)responseBodyMap.get("serverhost"));
     }
 

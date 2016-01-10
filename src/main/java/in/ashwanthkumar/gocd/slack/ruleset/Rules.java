@@ -66,7 +66,7 @@ public class Rules {
         return slackUserIconURL;
     }
 
-    private Rules setSlackUserIcon(String iconURL) {
+    public Rules setSlackUserIcon(String iconURL) {
         this.slackUserIconURL = iconURL;
         return this;
     }

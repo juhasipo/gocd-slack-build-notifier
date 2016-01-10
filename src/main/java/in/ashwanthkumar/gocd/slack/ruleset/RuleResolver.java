@@ -53,6 +53,7 @@ public class RuleResolver {
                 .setGoLogin(defaultRules.getGoLogin())
                 .setGoServerHost(defaultRules.getGoServerHost())
                 .setWebHookUrl(defaultRules.getWebHookUrl())
+                .setSlackUserIcon(defaultRules.getSlackUserIcon())
                 .setEnabled(defaultRules.isEnabled())
                 .setSlackChannel(slackChannel)
                 .setPipelineRules(Collections.singletonList(pipelineRule));
