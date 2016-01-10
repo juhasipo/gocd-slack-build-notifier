@@ -18,6 +18,7 @@ General and default configurations:
 - `Admin Password` - Password for the user specified above. You might want to create a less privileged user for this plugin.
 - `Server Host` - FQDN of the Go Server. All links on the slack channel will be relative to this host.
 - `Webhook URL` - Slack Webhook URL
+- `Display Name` - Name to show on the message
 - `Icon URL` - Message icon URL
 - `Default Channel` - Override the default channel where we should send the notifications in slack. You can also give a value starting with `@` to send it to any specific user.
 
