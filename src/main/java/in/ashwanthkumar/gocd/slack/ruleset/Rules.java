@@ -52,7 +52,7 @@ public class Rules {
         return slackDisplayName;
     }
 
-    private Rules setSlackDisplayName(String displayName) {
+    public Rules setSlackDisplayName(String displayName) {
         this.slackDisplayName = displayName;
         return this;
     }
