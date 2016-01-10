@@ -13,6 +13,16 @@ import java.util.List;
 public class GoNotificationMessage {
     private Logger LOG = Logger.getLoggerFor(GoNotificationMessage.class);
 
+    private final ServerFactory serverFactory;
+
+    public GoNotificationMessage() {
+        serverFactory = new DefaultServerFactory();
+    }
+
+    public GoNotificationMessage(ServerFactory serverFactory) {
+        this.serverFactory = serverFactory;
+    }
+
     /**
      * Raised when we can't find information about our build in the array
      * returned by the server.
@@ -111,7 +121,7 @@ public class GoNotificationMessage {
         throws URISyntaxException, IOException
     {
         if (mRecentPipelineHistory == null) {
-            Server server = new Server(rules);
+            Server server = serverFactory.getServer(rules);
             mRecentPipelineHistory = server.getPipelineHistory(pipeline.name);
         }
         return mRecentPipelineHistory;
@@ -189,7 +199,7 @@ public class GoNotificationMessage {
     public List<MaterialRevision> fetchChanges(Rules rules)
         throws URISyntaxException, IOException
     {
-        Server server = new Server(rules);
+        Server server = serverFactory.getServer(rules);
         Pipeline pipelineInstance =
             server.getPipelineInstance(pipeline.name, Integer.parseInt(pipeline.counter));
         return pipelineInstance.rootChanges(server);
