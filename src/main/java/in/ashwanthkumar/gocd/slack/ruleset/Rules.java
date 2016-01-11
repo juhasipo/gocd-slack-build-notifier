@@ -56,7 +56,7 @@ public class Rules {
         return slackDisplayName;
     }
 
-    private Rules setSlackDisplayName(String displayName) {
+    public Rules setSlackDisplayName(String displayName) {
         this.slackDisplayName = displayName;
         return this;
     }
@@ -65,7 +65,7 @@ public class Rules {
         return slackUserIconURL;
     }
 
-    private Rules setSlackUserIcon(String iconURL) {
+    public Rules setSlackUserIcon(String iconURL) {
         this.slackUserIconURL = iconURL;
         return this;
     }

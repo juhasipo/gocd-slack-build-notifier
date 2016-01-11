@@ -14,6 +14,7 @@ import in.ashwanthkumar.gocd.slack.ruleset.RulesReader;
 import java.io.File;
 import java.util.*;
 
+import static in.ashwanthkumar.utils.lang.StringUtils.isEmpty;
 import static java.util.Arrays.asList;
 
 @Extension
@@ -88,10 +89,6 @@ public class GoNotificationPlugin implements GoPlugin {
             response.put("messages", messages);
         }
         return renderJSON(responseCode, response);
-    }
-
-    private boolean isEmpty(String str) {
-        return str == null || str.trim().isEmpty();
     }
 
     private GoNotificationMessage parseNotificationMessage(GoPluginApiRequest goPluginApiRequest) {
