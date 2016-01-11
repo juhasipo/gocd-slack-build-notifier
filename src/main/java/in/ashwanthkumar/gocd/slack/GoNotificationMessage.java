@@ -136,13 +136,16 @@ public class GoNotificationMessage {
     public Pipeline fetchDetailsForBuild(Rules rules, int counter)
         throws URISyntaxException, IOException, BuildDetailsNotFoundException
     {
-        Pipeline[] pipelines = fetchRecentPipelineHistory(rules).pipelines;
-        // Search through the builds in our recent history, and hope that
-        // we can find the build we want.
-        for (int i = 0, size = pipelines.length; i < size; i++) {
-            Pipeline build = pipelines[i];
-            if (build.counter == counter)
-                return build;
+        History history = fetchRecentPipelineHistory(rules);
+        if (history != null) {
+            Pipeline[] pipelines = history.pipelines;
+            // Search through the builds in our recent history, and hope that
+            // we can find the build we want.
+            for (int i = 0, size = pipelines.length; i < size; i++) {
+                Pipeline build = pipelines[i];
+                if (build.counter == counter)
+                    return build;
+            }
         }
         throw new BuildDetailsNotFoundException(getPipelineName(), counter);
     }
