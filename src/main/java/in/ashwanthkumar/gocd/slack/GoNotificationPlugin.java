@@ -8,6 +8,8 @@ import com.thoughtworks.go.plugin.api.annotation.Extension;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
+import in.ashwanthkumar.gocd.slack.jsonapi.Server;
+import in.ashwanthkumar.gocd.slack.ruleset.RuleResolver;
 import in.ashwanthkumar.gocd.slack.ruleset.Rules;
 import in.ashwanthkumar.gocd.slack.ruleset.RulesReader;
 
@@ -73,9 +75,12 @@ public class GoNotificationPlugin implements GoPlugin {
         Map<String, Object> response = new HashMap<String, Object>();
         List<String> messages = new ArrayList<String>();
         try {
+            RuleResolver resolver = new RuleResolver(new Server(rules));
+            Rules pipelineRules = resolver.resolvePipelineRule(rules, message.getPipelineName(), message.getStageName());
+
             response.put("status", "success");
             LOGGER.info(message.fullyQualifiedJobName() + " has " + message.getStageState() + "/" + message.getStageResult());
-            rules.getPipelineListener().notify(message);
+            pipelineRules.getPipelineListener().notify(message);
         } catch (Exception e) {
             LOGGER.info(message.fullyQualifiedJobName() + " failed with error", e);
             responseCode = INTERNAL_ERROR_RESPONSE_CODE;
