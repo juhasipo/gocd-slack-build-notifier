@@ -19,8 +19,9 @@ public class GoNotificationMessage {
         serverFactory = new DefaultServerFactory();
     }
 
-    public GoNotificationMessage(ServerFactory serverFactory) {
+    GoNotificationMessage(ServerFactory serverFactory, PipelineInfo pipeline) {
         this.serverFactory = serverFactory;
+        this.pipeline = pipeline;
     }
 
     /**
@@ -38,33 +39,33 @@ public class GoNotificationMessage {
 
     static class StageInfo {
         @SerializedName("name")
-        private String name;
+        String name;
 
         @SerializedName("counter")
-        private String counter;
+        String counter;
 
         @SerializedName("state")
-        private String state;
+        String state;
 
         @SerializedName("result")
-        private String result;
+        String result;
 
         @SerializedName("create-time")
-        private String createTime;
+        String createTime;
 
         @SerializedName("last-transition-time")
-        private String lastTransitionTime;
+        String lastTransitionTime;
     }
 
     static class PipelineInfo {
         @SerializedName("name")
-        private String name;
+        String name;
 
         @SerializedName("counter")
-        private String counter;
+        String counter;
 
         @SerializedName("stage")
-        private StageInfo stage;
+        StageInfo stage;
     }
 
     @SerializedName("pipeline")
