@@ -1,6 +1,8 @@
 package in.ashwanthkumar.gocd.slack.jsonapi;
 
 import in.ashwanthkumar.gocd.slack.ruleset.Rules;
+import in.ashwanthkumar.gocd.slack.util.Options;
+import in.ashwanthkumar.utils.lang.option.Option;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -62,7 +64,7 @@ public class ServerTest {
         when(httpConnectionUtil.getConnection(any(URL.class))).thenReturn(conn);
         when(conn.getContent()).thenReturn(new Object());
 
-        server.getUrl(new URL("http://exmaple.org/"));
+        server.getUrl(new URL("http://exmaple.org/"), Options.<String>empty());
 
         verify(conn).setRequestProperty("Authorization", "Basic bG9naW46cGFzcw==");
     }
@@ -77,7 +79,7 @@ public class ServerTest {
         when(httpConnectionUtil.getConnection(any(URL.class))).thenReturn(conn);
         when(conn.getContent()).thenReturn(new Object());
 
-        server.getUrl(new URL("http://exmaple.org/"));
+        server.getUrl(new URL("http://exmaple.org/"), Options.<String>empty());
 
         verify(conn, never()).setRequestProperty(anyString(), anyString());
     }
@@ -94,7 +96,7 @@ public class ServerTest {
         when(httpConnectionUtil.getConnection(any(URL.class))).thenReturn(conn);
         when(conn.getContent()).thenReturn(new Object());
 
-        server.getUrl(new URL("http://exmaple.org/"));
+        server.getUrl(new URL("http://exmaple.org/"), Options.<String>empty());
 
         verify(conn, never()).setRequestProperty(anyString(), anyString());
     }
@@ -111,7 +113,7 @@ public class ServerTest {
         when(httpConnectionUtil.getConnection(any(URL.class))).thenReturn(conn);
         when(conn.getContent()).thenReturn(new Object());
 
-        server.getUrl(new URL("http://exmaple.org/"));
+        server.getUrl(new URL("http://exmaple.org/"), Options.<String>empty());
 
         verify(conn, never()).setRequestProperty(anyString(), anyString());
     }
@@ -128,9 +130,27 @@ public class ServerTest {
         when(httpConnectionUtil.getConnection(any(URL.class))).thenReturn(conn);
         when(conn.getContent()).thenReturn(new Object());
 
-        server.getUrl(new URL("http://exmaple.org/"));
+        server.getUrl(new URL("http://exmaple.org/"), Options.<String>empty());
 
         verify(conn, never()).setRequestProperty(anyString(), anyString());
+    }
+
+    @Test
+    public void shouldUseDefinedAcceptType() throws IOException {
+        HttpConnectionUtil httpConnectionUtil = mockConnection();
+        Server server = new Server(new Rules(), httpConnectionUtil);
+
+        HttpURLConnection conn = mock(HttpURLConnection.class);
+        when(httpConnectionUtil.getConnection(any(URL.class))).thenReturn(conn);
+        when(conn.getContent()).thenReturn(new Object());
+
+        server.getUrl(new URL("http://exmaple.org/"), Option.option("application/json"));
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> valueCaptor = ArgumentCaptor.forClass(String.class);
+        verify(conn).setRequestProperty(keyCaptor.capture(), valueCaptor.capture());
+        assertThat(keyCaptor.getValue(), is("Accept"));
+        assertThat(valueCaptor.getValue(), is("application/json"));
     }
 
     private HttpConnectionUtil mockConnection() throws IOException {
