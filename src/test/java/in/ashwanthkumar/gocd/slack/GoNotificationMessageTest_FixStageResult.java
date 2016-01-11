@@ -16,7 +16,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
-public class GoNotificationMessageTest {
+public class GoNotificationMessageTest_FixStageResult {
 
     public static final String PIPELINE_NAME = "PL";
     public static final String STAGE_NAME = "STG";
@@ -25,7 +25,7 @@ public class GoNotificationMessageTest {
     private GoNotificationMessage.PipelineInfo pipeline;
     private String expectedStatus;
 
-    public GoNotificationMessageTest(History pipelineHistory, GoNotificationMessage.PipelineInfo pipeline, String expectedStatus) {
+    public GoNotificationMessageTest_FixStageResult(History pipelineHistory, GoNotificationMessage.PipelineInfo pipeline, String expectedStatus) {
         this.pipelineHistory = pipelineHistory;
         this.pipeline = pipeline;
         this.expectedStatus = expectedStatus;
@@ -58,6 +58,13 @@ public class GoNotificationMessageTest {
                 whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(4), "Passed"))),
                 thenExpectStatus("Fixed")
         }, {
+                given(pipeline(PIPELINE_NAME, counter(1),
+                        stage("other-stage-name-1", counter(1), "Passed"),
+                        stage(STAGE_NAME,           counter(1), "Failed"),
+                        stage("other-stage-name-2", counter(1), "Passed"))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(4), "Passed"))),
+                thenExpectStatus("Fixed")
+        }, {
                 given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "Failed"))),
                 whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "Passed"))),
                 thenExpectStatus("Fixed")
@@ -69,6 +76,22 @@ public class GoNotificationMessageTest {
                 given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "passed"))),
                 whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "Failed"))),
                 thenExpectStatus("Broken")
+        }, {
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "passed"))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "passed"))),
+                thenExpectStatus("passed")
+        }, {
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "failed"))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "failed"))),
+                thenExpectStatus("failed")
+        }, {
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "failed"))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "cancelled"))),
+                thenExpectStatus("cancelled")
+        }, {
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "passed"))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "cancelled"))),
+                thenExpectStatus("cancelled")
         }
         });
     }
