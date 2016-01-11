@@ -66,6 +66,11 @@ public class GoNotificationMessage {
 
         @SerializedName("stage")
         StageInfo stage;
+
+        @Override
+        public String toString() {
+            return name + "/" + counter + "/" + stage.name + "/" + stage.result;
+        }
     }
 
     @SerializedName("pipeline")
