@@ -43,55 +43,55 @@ public class GoNotificationMessageTest_FixStageResult {
     @Parameterized.Parameters(name = "Test #{index}: Pipeline {1} should return correct status {2}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {{
-                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "failed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(2), "building"))),
-                thenExpectStatus("building")
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), Status.Failed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(2), Status.Building))),
+                thenExpectStatus(Status.Building)
         }, {
-                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "failed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(2), "Passed"))),
-                thenExpectStatus("Fixed")
-        }, {
-                given(pipeline(PIPELINE_NAME, counter(1),
-                        stage("other-stage-name-1", counter(1), "Failed"),
-                        stage(STAGE_NAME,           counter(1), "Failed"),
-                        stage("other-stage-name-2", counter(1), "Failed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(4), "Passed"))),
-                thenExpectStatus("Fixed")
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), Status.Failed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(2), Status.Passed))),
+                thenExpectStatus(Status.Fixed)
         }, {
                 given(pipeline(PIPELINE_NAME, counter(1),
-                        stage("other-stage-name-1", counter(1), "Passed"),
-                        stage(STAGE_NAME,           counter(1), "Failed"),
-                        stage("other-stage-name-2", counter(1), "Passed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(4), "Passed"))),
-                thenExpectStatus("Fixed")
+                        stage("other-stage-name-1", counter(1), Status.Failed),
+                        stage(STAGE_NAME,           counter(1), Status.Failed),
+                        stage("other-stage-name-2", counter(1), Status.Failed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(4), Status.Passed))),
+                thenExpectStatus(Status.Fixed)
         }, {
-                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "Failed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "Passed"))),
-                thenExpectStatus("Fixed")
+                given(pipeline(PIPELINE_NAME, counter(1),
+                        stage("other-stage-name-1", counter(1), Status.Passed),
+                        stage(STAGE_NAME,           counter(1), Status.Failed),
+                        stage("other-stage-name-2", counter(1), Status.Passed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(4), Status.Passed))),
+                thenExpectStatus(Status.Fixed)
         }, {
-                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "passed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(2), "Failed"))),
-                thenExpectStatus("Broken")
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), Status.Failed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), Status.Passed))),
+                thenExpectStatus(Status.Fixed)
         }, {
-                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "passed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "Failed"))),
-                thenExpectStatus("Broken")
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), Status.Passed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(2), Status.Failed))),
+                thenExpectStatus(Status.Broken)
         }, {
-                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "passed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "passed"))),
-                thenExpectStatus("passed")
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), Status.Passed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), Status.Failed))),
+                thenExpectStatus(Status.Broken)
         }, {
-                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "failed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "failed"))),
-                thenExpectStatus("failed")
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), Status.Passed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), Status.Passed))),
+                thenExpectStatus(Status.Passed)
         }, {
-                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "failed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "cancelled"))),
-                thenExpectStatus("cancelled")
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), Status.Failed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), Status.Failed))),
+                thenExpectStatus(Status.Failed)
         }, {
-                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), "passed"))),
-                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), "cancelled"))),
-                thenExpectStatus("cancelled")
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), Status.Failed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), Status.Cancelled))),
+                thenExpectStatus(Status.Cancelled)
+        }, {
+                given(pipeline(PIPELINE_NAME, counter(1), stage(STAGE_NAME, counter(1), Status.Passed))),
+                whenFinished(pipeline(PIPELINE_NAME, counter(2), stage(STAGE_NAME, counter(2), Status.Cancelled))),
+                thenExpectStatus(Status.Cancelled)
         }
         });
     }
@@ -126,11 +126,11 @@ public class GoNotificationMessageTest_FixStageResult {
         return pipeline;
     }
 
-    private static Stage stage(String name, int counter, String status) {
+    private static Stage stage(String name, int counter, Status status) {
         Stage stage = new Stage();
         stage.name = name;
         stage.counter = counter;
-        stage.result = status;
+        stage.result = status.getStatus();
         return stage;
     }
 
@@ -143,13 +143,13 @@ public class GoNotificationMessageTest_FixStageResult {
         Stage stage = pipeline.stages[0];
         info.stage.counter = Integer.toString(stage.counter);
         info.stage.name = stage.name;
-        info.stage.state = stage.result;
-        info.stage.result = stage.result;
+        info.stage.state = Status.valueOf(stage.result).getStatus();
+        info.stage.result = Status.valueOf(stage.result).getResult();
         return info;
     }
 
-    private static String thenExpectStatus(String value) {
-        return value;
+    private static String thenExpectStatus(Status status) {
+        return status.getStatus();
     }
 
     private static int counter(int value) {
