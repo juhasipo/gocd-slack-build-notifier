@@ -2,6 +2,7 @@ package in.ashwanthkumar.gocd.slack.ruleset;
 
 import com.typesafe.config.Config;
 import in.ashwanthkumar.gocd.slack.PipelineListener;
+import in.ashwanthkumar.gocd.slack.SlackPipelineListener;
 import in.ashwanthkumar.utils.collections.Lists;
 import in.ashwanthkumar.utils.func.Function;
 import in.ashwanthkumar.utils.func.Predicate;
@@ -108,6 +109,10 @@ public class Rules {
 
     public PipelineListener getPipelineListener() {
         return pipelineListener;
+    }
+
+    public PipelineListener resolvePipelineListener() {
+        return new SlackPipelineListener(this);
     }
 
     public Option<PipelineRule> find(final String pipeline, final String stage, final String pipelineStatus) {

@@ -51,6 +51,8 @@ public class GoNotificationPlugin implements GoPlugin {
     }
 
     public GoPluginApiResponse handle(GoPluginApiRequest goPluginApiRequest) {
+        //printMessageDebugInfo(goPluginApiRequest);
+
         if (goPluginApiRequest.requestName().equals(REQUEST_NOTIFICATIONS_INTERESTED_IN)) {
             return handleNotificationsInterestedIn();
         } else if (goPluginApiRequest.requestName().equals(REQUEST_STAGE_STATUS)) {
@@ -122,7 +124,7 @@ public class GoNotificationPlugin implements GoPlugin {
 
             response.put("status", "success");
             LOGGER.info(message.fullyQualifiedJobName() + " has " + message.getStageState() + "/" + message.getStageResult());
-            pipelineRules.getPipelineListener().notify(message);
+            pipelineRules.resolvePipelineListener().notify(message);
         } catch (Exception e) {
             LOGGER.info(message.fullyQualifiedJobName() + " failed with error", e);
             responseCode = INTERNAL_ERROR_RESPONSE_CODE;
@@ -182,5 +184,10 @@ public class GoNotificationPlugin implements GoPlugin {
                 return json;
             }
         };
+    }
+
+    private void printMessageDebugInfo(GoPluginApiRequest goPluginApiRequest) {
+        LOGGER.info("Received message: " + goPluginApiRequest.requestName());
+        LOGGER.info("Received message body: " + goPluginApiRequest.requestBody());
     }
 }
